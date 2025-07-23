@@ -1,0 +1,55 @@
+//
+//  sample_response.json
+//  src-archive
+//
+//  Created by Daniel Chen on 7/22/25.
+//
+
+{
+  "contentMetadata": [
+    {
+      "userPostID": "123",
+      "userID": "45",
+      "postType": "image",
+      "postUUID": "uuid-123",
+      "postDescription": "A sample post",
+      "locationGridMapID": "N3392W11840",
+      "resolutionHeight": "1080",
+      "resolutionWidth": "720",
+      "postLocalTime": "2025-07-20T18:00:00",
+      "postServerTime": "2025-07-20T18:01:00",
+      "username": "user_one",
+      "profilePicUUID": "pfp-uuid-1",
+      "profileDescription": "Just vibing.",
+      "profileAlbumID": "99",
+      "pop": "50",
+      "numComments": 3,
+      "graffitiS3URL": "https://cdn.example.com/graffiti1.png",
+      "graffitiResHeight": "1024",
+      "graffitiResWidth": "768",
+      "graffitiArtists": ["user_one", "user_two"]
+    },
+    {
+      "userPostID": "124",
+      "userID": "46",
+      "postType": "video",
+      "postUUID": "uuid-124",
+      "postDescription": "Another post",
+      "locationGridMapID": "N3393W11841",
+      "resolutionHeight": "1920",
+      "resolutionWidth": "1080",
+      "postLocalTime": "2025-07-20T18:30:00",
+      "postServerTime": "2025-07-20T18:31:00",
+      "username": "user_two",
+      "profilePicUUID": "pfp-uuid-2",
+      "profileDescription": "Explorer",
+      "profileAlbumID": "100",
+      "pop": "76",
+      "numComments": 5,
+      "graffitiS3URL": "https://cdn.example.com/graffiti2.png",
+      "graffitiResHeight": "2048",
+      "graffitiResWidth": "1536",
+      "graffitiArtists": ["user_two"]
+    }
+  ]
+}
