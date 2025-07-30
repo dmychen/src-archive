@@ -1,3 +1,10 @@
+//
+//  ContentTypes.swift
+//  src-archive
+//
+//  Created by Daniel Chen on 7/23/25.
+//
+
 enum ContentType: Decodable {
     case image
     case video
@@ -66,12 +73,14 @@ func cloudfrontURLFormatter(userID: String, contentUUID: String, contentType: Co
             return "https://d2efywtjr3ai55.cloudfront.net/sample_data/\(userID)/post/\(contentUUID)/og"
         } else if contentType == .video {
             return "https://d2efywtjr3ai55.cloudfront.net/sample_data/\(userID)/post/\(contentUUID)/hls/og.m3u8"
+        } else {
+            print("URLFormatter: Unknown content type: \(String(describing: contentType))")
         }
     } else if assetCategory == .profile_pic {
         return "https://d2efywtjr3ai55.cloudfront.net/sample_data/\(userID)/profile_pic/\(contentUUID)/og"
     }
     
-    goggins("error formatting cloudfront url")
+    print("URLFormatter: Unable to format cloudfront URL for asset category: \(assetCategory)")
     return nil
 }
 

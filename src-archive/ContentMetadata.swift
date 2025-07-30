@@ -1,23 +1,31 @@
+struct getContentMetadataResponseBodyV2: Decodable {
+    let contentMetadata: [ContentMetadata]
+    
+    enum CodingKeys: String, CodingKey {
+        case contentMetadata
+    }
+}
+
 struct ContentMetadata: Decodable {
     let userPostID: String
     let userID: String
-    let postType: String  // "image" or "video"
+    let postType: ContentType  // "image" or "video"
     let postUUID: String
     let postDescription: String
-    let locationGridMapID: String?
-    let resolutionHeight: String
-    let resolutionWidth: String
+    let locationGridMapID: String? // deprecated
+    let resolutionHeight: Double
+    let resolutionWidth: Double
     let postLocalTime: String
     let postServerTime: String
     let username: String
     let profilePicUUID: String
     let profileDescription: String
     let profileAlbumID: String
-    let pop: String
+    let pop: Float
     let numComments: Int?
     let graffitiS3URL: String?
-    let graffitiResHeight: String?
-    let graffitiResWidth: String?
+    let graffitiResHeight: Double?
+    let graffitiResWidth: Double?
     let graffitiArtists: [String]?
     
     enum CodingKeys: String, CodingKey {
@@ -41,13 +49,5 @@ struct ContentMetadata: Decodable {
         case graffitiResHeight = "graffitiResHeight"
         case graffitiResWidth = "graffitiResWidth"
         case graffitiArtists = "graffitiArtists"
-    }
-}
-
-struct ContentMetadataResponse: Decodable {
-    let contentMetadata: [ContentMetadata]
-    
-    enum CodingKeys: String, CodingKey {
-        case contentMetadata = "contentMetadata"
     }
 }

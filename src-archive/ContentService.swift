@@ -14,62 +14,43 @@ class ContentService {
     private init() {}
     
     func fetchUserContent(completion: @escaping (Result<[ContentMetadata], Error>) -> Void) {
-        // FIXME: replace with real API call
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            let mockData = self.generateMockData()
-            completion(.success(mockData))
+        // load mock data
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let mockData = try self.loadMockDataFromJSON()
+                DispatchQueue.main.async {
+                    completion(.success(mockData))
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                }
+            }
         }
     }
     
-    private func generateMockData() -> [ContentMetadata] {
-        var data = [
-            ContentMetadata(
-                userPostID: "1", userID: "user1", postType: "image", postUUID: "uuid1",
-                postDescription: "Beautiful sunset", locationGridMapID: nil,
-                resolutionHeight: "1080", resolutionWidth: "1080",
-                postLocalTime: "2024-01-15T18:30:00", postServerTime: "2024-01-15T18:30:00",
-                username: "photographer1", profilePicUUID: "pic1",
-                profileDescription: "Nature lover", profileAlbumID: "album1",
-                pop: "85", numComments: 12, graffitiS3URL: nil,
-                graffitiResHeight: nil, graffitiResWidth: nil, graffitiArtists: nil
-            ),
-            ContentMetadata(
-                userPostID: "2", userID: "user2", postType: "video", postUUID: "uuid2",
-                postDescription: "Street art timelapse", locationGridMapID: "grid1",
-                resolutionHeight: "1920", resolutionWidth: "1080",
-                postLocalTime: "2024-01-14T12:15:00", postServerTime: "2024-01-14T12:15:00",
-                username: "artist2", profilePicUUID: "pic2",
-                profileDescription: "Urban artist", profileAlbumID: "album2",
-                pop: "92", numComments: 25, graffitiS3URL: "https://example.com/graffiti.jpg",
-                graffitiResHeight: "1080", graffitiResWidth: "1080", graffitiArtists: ["Artist1", "Artist2"]
-            ),
-            ContentMetadata(
-                userPostID: "3", userID: "user3", postType: "image", postUUID: "uuid3",
-                postDescription: "City architecture", locationGridMapID: "grid2",
-                resolutionHeight: "1080", resolutionWidth: "1080",
-                postLocalTime: "2024-01-13T09:45:00", postServerTime: "2024-01-13T09:45:00",
-                username: "architect3", profilePicUUID: "pic3",
-                profileDescription: "Building enthusiast", profileAlbumID: "album3",
-                pop: "78", numComments: 8, graffitiS3URL: nil,
-                graffitiResHeight: nil, graffitiResWidth: nil, graffitiArtists: nil
-            )
-        ]
-        
-        // fill in rest of grid with more cells
-        for i in 4...25 {
-            data.append(ContentMetadata(
-                userPostID: "\(i)", userID: "user\(i)", postType: i % 3 == 0 ? "video" : "image",
-                postUUID: "uuid\(i)", postDescription: "Sample post \(i)",
-                locationGridMapID: nil, resolutionHeight: "1080", resolutionWidth: "1080",
-                postLocalTime: "2024-01-\(10 + i % 20)T\(10 + i % 12):00:00",
-                postServerTime: "2024-01-\(10 + i % 20)T\(10 + i % 12):00:00",
-                username: "user\(i)", profilePicUUID: "pic\(i)",
-                profileDescription: "Sample user", profileAlbumID: "album\(i)",
-                pop: "\(60 + i % 40)", numComments: i % 20, graffitiS3URL: nil,
-                graffitiResHeight: nil, graffitiResWidth: nil, graffitiArtists: nil
-            ))
+    // loading data from test_metadata.kson for now
+    private func loadMockDataFromJSON() throws -> [ContentMetadata] {
+        guard let url = Bundle.main.url(forResource: "test_metadata", withExtension: "json") else {
+            throw ContentServiceError.fileNotFound
         }
         
-        return data
+        let data = try Data(contentsOf: url)
+        let decoder = JSONDecoder()
+        let response = try decoder.decode(getContentMetadataResponseBodyV2.self, from: data)
+        
+        return response.contentMetadata
+    }
+}
+
+// MARK: - Error types
+enum ContentServiceError: Error, LocalizedError {
+    case fileNotFound
+    
+    var errorDescription: String? {
+        switch self {
+        case .fileNotFound:
+            return "test_metadata.json file not found in bundle"
+        }
     }
 }
