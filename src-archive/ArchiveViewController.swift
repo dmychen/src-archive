@@ -132,9 +132,9 @@ class ArchiveViewController: UIViewController {
     private func handleContentTap(at indexPath: IndexPath) {
         let content = content[indexPath.item]
        
-        let fullscreenVC = FullscreenContentViewController(content: content)
-        fullscreenVC.preferredTransition = .zoom { context in
-            guard let controller = context.zoomedViewController as? FullscreenContentViewController else {
+        let detailedContentVC = DetailedContentViewController(content: content)
+        detailedContentVC.preferredTransition = .zoom { context in
+            guard let controller = context.zoomedViewController as? DetailedContentViewController else {
                 print("unable to access current VC")
                 fatalError("Unable ot access the current view controller")
             }
@@ -143,7 +143,7 @@ class ArchiveViewController: UIViewController {
             let targetUUID = controller.currentContent.postUUID
             return self.findCellForContent(with: targetUUID)
         }
-        present(fullscreenVC, animated: true)
+        present(detailedContentVC, animated: true)
     }
     
     // Helper method to find a cell by content UUID (stable identifier)

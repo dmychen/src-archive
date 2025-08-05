@@ -10,10 +10,11 @@ import AVFoundation
 import AVKit
 import Kingfisher
 
-class FullscreenContentViewController: UIViewController {
+class DetailedContentViewController: UIViewController {
     
     // MARK: properties
     private let content: ContentMetadata
+    private let scrollView = UIScrollView()
     private let imageView = UIImageView()
     private let videoPlayerViewController = AVPlayerViewController()
     private let videoPlayer = AVPlayer()
@@ -34,7 +35,7 @@ class FullscreenContentViewController: UIViewController {
     
     // MARK: constants
     private struct Constants {
-        // corner radius
+        // corners
         static var contentCornerRadius: CGFloat = 10
         static var buttonCornerRadius: CGFloat = 20
         static var profileImageCornerRadius: CGFloat = 20
@@ -63,13 +64,17 @@ class FullscreenContentViewController: UIViewController {
         static var timeFontSize: CGFloat = 14   
         static var labelFontSize: CGFloat = 12
         
+        // zoom
+        static var minZoomScale: CGFloat = 1
+        static var maxZoomScale: CGFloat = 6
+        
         static var interactionAreaHeight: CGFloat {
            return Constants.interactionButtonSize + Constants.labelHeight
        }
     }
     
     var currentContent: ContentMetadata {
-        return content
+        return content // getter for current content
     }
     
     // MARK: - Initialization
@@ -111,29 +116,36 @@ class FullscreenContentViewController: UIViewController {
     private func setupView() {
         view.backgroundColor = .systemBackground
         modalPresentationStyle = .fullScreen
-        // want parent view to show through
         modalTransitionStyle = .coverVertical
     }
     
     private func setupUI() {
+        // Scroll Viw
+        scrollView.delegate = self
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.minimumZoomScale = Constants.minZoomScale
+        scrollView.maximumZoomScale = Constants.maxZoomScale
+        scrollView.backgroundColor = .systemGray5
+        view.addSubview(scrollView)
+        
+        
         // Image View
         imageView.contentMode = .scaleAspectFit
-        imageView.backgroundColor = .systemGray5
+        imageView.backgroundColor = .clear
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.layer.cornerRadius = Constants.contentCornerRadius
         imageView.layer.masksToBounds = true
-        // Add subtle shadow for bevel effect FIXME: update this
         imageView.layer.shadowColor = UIColor.black.cgColor
         imageView.layer.shadowOffset = Constants.shadowOffset
         imageView.layer.shadowOpacity = Constants.shadowOpacity
         imageView.layer.shadowRadius = Constants.shadowRadius
-        view.addSubview(imageView)
+        scrollView.addSubview(imageView)
         
         // Video Player View
+        videoPlayerViewController.view.backgroundColor = .clear
         videoPlayerViewController.view.translatesAutoresizingMaskIntoConstraints = false
         videoPlayerViewController.view.layer.cornerRadius = Constants.contentCornerRadius
         videoPlayerViewController.view.layer.masksToBounds = true
-        // Add subtle shadow for bevel effect FIXME: update
         videoPlayerViewController.view.layer.shadowColor = UIColor.black.cgColor
         videoPlayerViewController.view.layer.shadowOffset = Constants.shadowOffset
         videoPlayerViewController.view.layer.shadowOpacity = Constants.shadowOpacity
@@ -145,7 +157,7 @@ class FullscreenContentViewController: UIViewController {
         
         videoPlayerViewController.player = videoPlayer
 
-        view.addSubview(videoPlayerViewController.view)
+        scrollView.addSubview(videoPlayerViewController.view)
         
         // Profile Image View
         profileImageView.backgroundColor = .systemGray4
@@ -251,17 +263,27 @@ class FullscreenContentViewController: UIViewController {
     
     private func setupConstraints() {
         NSLayoutConstraint.activate([
-            // Image View
-            imageView.topAnchor.constraint(equalTo: view.topAnchor),
-            imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            imageView.bottomAnchor.constraint(equalTo: interactionStackView.topAnchor, constant: -Constants.contentSpacing),
+            // Scroll View
+            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: interactionStackView.topAnchor, constant: -Constants.contentSpacing),
             
-            // Video View
-            videoPlayerViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
-            videoPlayerViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            videoPlayerViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            videoPlayerViewController.view.bottomAnchor.constraint(equalTo: interactionStackView.topAnchor, constant: -Constants.contentSpacing),
+            // Image View (inside scroll view)
+            imageView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            imageView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            imageView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+            imageView.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
+            
+            // Video View (inside scroll view)
+            videoPlayerViewController.view.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            videoPlayerViewController.view.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            videoPlayerViewController.view.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            videoPlayerViewController.view.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            videoPlayerViewController.view.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+            videoPlayerViewController.view.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
             
             // Profile Image View
             profileImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: Constants.safeAreaSpacing),
@@ -371,5 +393,16 @@ class FullscreenContentViewController: UIViewController {
         let navController = UINavigationController(rootViewController: interactionVC)
         navController.modalPresentationStyle = .pageSheet
         present(navController, animated: true)
+    }
+}
+
+// setup zooming
+extension DetailedContentViewController: UIScrollViewDelegate {
+    func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+        return content.postType == .image ? imageView : videoPlayerViewController.view
+    }
+    
+    func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
+        scrollView.setZoomScale(1.0, animated: true) // always reset zoom to 1.0 after letting go
     }
 }
