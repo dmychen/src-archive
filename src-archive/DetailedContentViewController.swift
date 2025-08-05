@@ -142,7 +142,6 @@ class DetailedContentViewController: UIViewController {
         scrollView.addSubview(imageView)
         
         // Video Player View
-        videoPlayerViewController.view.backgroundColor = .clear
         videoPlayerViewController.view.translatesAutoresizingMaskIntoConstraints = false
         videoPlayerViewController.view.layer.cornerRadius = Constants.contentCornerRadius
         videoPlayerViewController.view.layer.masksToBounds = true
@@ -202,6 +201,10 @@ class DetailedContentViewController: UIViewController {
         interactionStackView.axis = .horizontal
         interactionStackView.spacing = Constants.stackViewSpacing
         interactionStackView.alignment = .center
+        interactionStackView.layer.shadowColor = UIColor.black.cgColor
+        interactionStackView.layer.shadowOffset = Constants.shadowOffset
+        interactionStackView.layer.shadowOpacity = Constants.shadowOpacity
+        interactionStackView.layer.shadowRadius = Constants.shadowRadius
         interactionStackView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(interactionStackView)
         
