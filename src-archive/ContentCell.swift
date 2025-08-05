@@ -7,6 +7,7 @@
 
 import UIKit
 import AVFoundation
+import Kingfisher
 
 // MARK: - class for a single cell of content in a CollectionView
 class ContentCell: UICollectionViewCell {
@@ -16,27 +17,29 @@ class ContentCell: UICollectionViewCell {
     // MARK: constants
     private struct Constants {
         // corner radius
-        static var cellCornerRadius: CGFloat = 10
-        static var dateLabelCornerRadius: CGFloat = 6
-        static var interactionContainerCornerRadius: CGFloat = 4
+        static let cellCornerRadius: CGFloat = 10
+        static let dateLabelCornerRadius: CGFloat = 6
+        static let interactionContainerCornerRadius: CGFloat = 4
         
         // aspect ratio
-        static var contentAspectRatio: CGFloat = 1.0
+        static let contentAspectRatio: CGFloat = 1.0
         
         // Spacing and sizing
-        static var dateLabelWidth: CGFloat = 36
-        static var dateLabelHeight: CGFloat = 36
-        static var videoOverlaySize: CGFloat = 30
-        static var interactionContainerHeight: CGFloat = 20
-        static var iconSize: CGFloat = 12
-        static var spacing: CGFloat = 4
-        static var iconSpacing: CGFloat = 8
-        static var labelSpacing: CGFloat = 2
+        static let dateLabelWidth: CGFloat = 36
+        static let dateLabelHeight: CGFloat = 36
+        static let videoOverlaySize: CGFloat = 30
+        static let interactionContainerHeight: CGFloat = 20
+        static let iconSize: CGFloat = 12
+        static let spacing: CGFloat = 4
+        static let iconSpacing: CGFloat = 8
+        static let labelSpacing: CGFloat = 2
         
         // Date label fonts
-        static var dayFontSize: CGFloat = 12
-        static var monthFontSize: CGFloat = 8
-        static var dateVerticalSpacing: CGFloat = -2
+        static let dayFontSize: CGFloat = 12
+        static let monthFontSize: CGFloat = 8
+        static let dateVerticalSpacing: CGFloat = -2
+        
+        static let overlayColor: UIColor = .systemGray.withAlphaComponent(0.2)
     }
     
     // MARK: properties
@@ -63,8 +66,6 @@ class ContentCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        // cancel any ongoing image loading and reset to placeholder
-        imageView.image = UIImage(systemName: "photo")
         imageView.backgroundColor = .systemGray5
     }
     
@@ -81,7 +82,7 @@ class ContentCell: UICollectionViewCell {
         contentView.addSubview(imageView)
         
         // date container
-        dateContainer.backgroundColor = UIColor.black.withAlphaComponent(0.2)
+        dateContainer.backgroundColor = Constants.overlayColor
         dateContainer.layer.cornerRadius = Constants.dateLabelCornerRadius
         dateContainer.layer.masksToBounds = true
         dateContainer.translatesAutoresizingMaskIntoConstraints = false
@@ -109,7 +110,7 @@ class ContentCell: UICollectionViewCell {
         contentView.addSubview(videoOverlay)
         
         // display interaction (comments/likes)
-        interactionContainer.backgroundColor = UIColor.black.withAlphaComponent(0.8)
+        interactionContainer.backgroundColor = Constants.overlayColor
         interactionContainer.layer.cornerRadius = Constants.interactionContainerCornerRadius
         interactionContainer.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(interactionContainer)
@@ -225,39 +226,32 @@ class ContentCell: UICollectionViewCell {
         }
     }
     
-    func configure(with content: ContentMetadata) {
-        // Load content based on type
-        if let mediaURL = cloudfrontURLFormatter(
-            userID: content.userID,
-            contentUUID: content.postUUID,
-            contentType: content.postType,
-            assetCategory: .post
-        ) {
-            switch content.postType {
-            case .image:
-                // Load image with placeholder
-                let placeholder = UIImage(systemName: "photo")
-                imageView.backgroundColor = .systemGray5
-                imageView.loadImage(from: mediaURL, placeholder: placeholder)
-                
-            case .video:
-                // Load first frame of video
-                loadVideoThumbnail(from: mediaURL)
+    
+    func setImage(with url: String) {
+        let downsamplingProcessor = DownsamplingImageProcessor(size: imageView.intrinsicContentSize) // for thumbnail view we downsize the image
+        
+        imageView.kf.setImage(
+            with: URL(string: url),
+            options: [.processor(downsamplingProcessor)]
+        ) { result in
+            switch result {
+            case .success(let imageResult):
+                print("ContentCell image loaded from cache: \(imageResult.cacheType)")
+            case .failure(let error):
+                print("Error: \(error)")
             }
-        } else {
-            print("ContentCell: Failed to generate media URL for content: \(content.postUUID)")
-            // Fallback to placeholder if URL formatting fails
-            imageView.image = UIImage(systemName: "photo")
-            imageView.backgroundColor = .systemGray5
         }
+    }
+    
+    func configure(with content: ContentMetadata) {
         
-        // video overlay for video content
-        videoOverlay.isHidden = content.postType != ContentType.video
+        imageView.kf.indicatorType = .activity
+        videoOverlay.isHidden = content.postType == .image
         
-        // format and display date in new format
+        // format and display date TODO: migrate to existing date formatter in the future
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-        if let date = formatter.date(from: content.postLocalTime) {
+        if let date = formatter.date(from: content.postServerTime) {
             // Day number
             formatter.dateFormat = "d"
             dayLabel.text = formatter.string(from: date)
@@ -272,45 +266,6 @@ class ContentCell: UICollectionViewCell {
         
         // Display interaction counts TODO: fix likes
         commentsLabel.text = "\(content.numComments ?? 0)"
-        likesLabel.text = "0" // FIXME: not sure about likes rn
-    }
-    
-    // TODO: factor out into a helper, since fullscreenContentViewController relies on the same code
-    // MARK: - Video Thumbnail Loading
-    private func loadVideoThumbnail(from urlString: String) {
-        guard let url = URL(string: urlString) else {
-            setPlaceholderImage()
-            return
-        }
-        
-        // Set placeholder while loading
-        imageView.image = UIImage(systemName: "photo")
-        imageView.backgroundColor = .systemGray5
-        
-        Task {
-            do {
-                let asset = AVURLAsset(url: url)
-                let imageGenerator = AVAssetImageGenerator(asset: asset)
-                imageGenerator.appliesPreferredTrackTransform = true
-                
-                // Generate thumbnail at time zero (first frame)
-                let result = try await imageGenerator.image(at: .zero)
-                
-                await MainActor.run {
-                    self.imageView.image = UIImage(cgImage: result.image)
-                    self.imageView.backgroundColor = .clear
-                }
-            } catch {
-                print("ContentCell: Failed to generate video thumbnail: \(error)")
-                await MainActor.run {
-                    self.setPlaceholderImage()
-                }
-            }
-        }
-    }
-    
-    private func setPlaceholderImage() {
-        imageView.image = UIImage(systemName: "play.rectangle")
-        imageView.backgroundColor = .systemGray5
+        likesLabel.text = "\(content.pop)"
     }
 }

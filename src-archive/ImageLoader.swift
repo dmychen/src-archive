@@ -78,35 +78,35 @@ class ImageLoader {
 }
 
 // MARK: - extension to UIImageView to load images through cloudfrontURL
-extension UIImageView {
-    private static var imageLoadTaskKey: UInt8 = 0
-    
-    private var imageLoadTask: URLSessionDataTask? {
-        get {
-            return objc_getAssociatedObject(self, &UIImageView.imageLoadTaskKey) as? URLSessionDataTask
-        }
-        set {
-            objc_setAssociatedObject(self, &UIImageView.imageLoadTaskKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-        }
-    }
-    
-    func loadImage(from urlString: String, placeholder: UIImage? = nil) {
-        // cancel any existing load task
-        if let existingTask = imageLoadTask {
-            existingTask.cancel()
-        }
-        
-        // Set placeholder
-        self.image = placeholder
-        
-        // Load image using the shared loader
-        ImageLoader.shared.loadImage(from: urlString) { [weak self] image in
-            guard let self = self else { return }
-            
-            if let image = image {
-                self.image = image
-            }
-        }
-    }
-}
-
+//extension UIImageView {
+//    private static var imageLoadTaskKey: UInt8 = 0
+//    
+//    private var imageLoadTask: URLSessionDataTask? {
+//        get {
+//            return objc_getAssociatedObject(self, &UIImageView.imageLoadTaskKey) as? URLSessionDataTask
+//        }
+//        set {
+//            objc_setAssociatedObject(self, &UIImageView.imageLoadTaskKey, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+//        }
+//    }
+//    
+//    func loadImage(from urlString: String, placeholder: UIImage? = nil) {
+//        // cancel any existing load task
+//        if let existingTask = imageLoadTask {
+//            existingTask.cancel()
+//        }
+//        
+//        // Set placeholder
+//        self.image = placeholder
+//        
+//        // Load image using the shared loader
+//        ImageLoader.shared.loadImage(from: urlString) { [weak self] image in
+//            guard let self = self else { return }
+//            
+//            if let image = image {
+//                self.image = image
+//            }
+//        }
+//    }
+//}
+//

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "8215D141-7EDA-4FF0-806A-2692F2933405"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "6CCCF8C2-CAA5-4C7D-A2E1-7893C050BD46"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "src-archive/FullscreenContentViewController.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "35"
+            endingLineNumber = "35"
+            landmarkName = "FullscreenContentViewController"
+            landmarkType = "3">
+            <Locations>
+               <Location
+                  uuid = "6CCCF8C2-CAA5-4C7D-A2E1-7893C050BD46 - aa4c8e0a2af618f6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "src_archive.FullscreenContentViewController.initialFrame.getter : __C.CGRect"
+                  moduleName = "src-archive.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/danielchen/dev/src-archive/src-archive/FullscreenContentViewController.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "6CCCF8C2-CAA5-4C7D-A2E1-7893C050BD46 - fa16bbe31558e0e2"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "src_archive.FullscreenContentViewController.initialFrame.setter : __C.CGRect"
+                  moduleName = "src-archive.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/danielchen/dev/src-archive/src-archive/FullscreenContentViewController.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "6CCCF8C2-CAA5-4C7D-A2E1-7893C050BD46 - b8405ff9ccf6c22d"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "src_archive.FullscreenContentViewController.initialFrame.modify : __C.CGRect"
+                  moduleName = "src-archive.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/danielchen/dev/src-archive/src-archive/FullscreenContentViewController.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "36"
+                  endingLineNumber = "36">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>

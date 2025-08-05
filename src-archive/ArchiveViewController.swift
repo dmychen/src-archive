@@ -29,7 +29,7 @@ class ArchiveViewController: UIViewController {
         view.backgroundColor = .systemBackground // TODO: choose background color
         setupNavigationBar()
         setupCollectionView()
-        setupLoadingIndicator()
+//        setupLoadingIndicator()
         loadContent()
         // Do any additional setup after loading the view.
     }
@@ -98,14 +98,14 @@ class ArchiveViewController: UIViewController {
     
     // MARK: load content
     private func loadContent() {
-        isLoading = true
-        loadingIndicator.startAnimating()
+//        isLoading = true
+//        loadingIndicator.startAnimating()
         
         // fetch data from our ContentService
         ContentService.shared.fetchUserContent { [weak self] result in
             DispatchQueue.main.async {
-                self?.isLoading = false
-                self?.loadingIndicator.stopAnimating()
+//                self?.isLoading = false
+//                self?.loadingIndicator.stopAnimating()
                 
                 switch result {
                 case .success(let content):
@@ -131,19 +131,30 @@ class ArchiveViewController: UIViewController {
     // MARK: fullscreen content when tapped
     private func handleContentTap(at indexPath: IndexPath) {
         let content = content[indexPath.item]
-        
-        // Get the cell's frame in the window coordinate system
-        guard let cell = collectionView.cellForItem(at: indexPath) else {
-            let fullscreenVC = FullscreenContentViewController(content: content)
-            present(fullscreenVC, animated: true)
-            return
+       
+        let fullscreenVC = FullscreenContentViewController(content: content)
+        fullscreenVC.preferredTransition = .zoom { context in
+            guard let controller = context.zoomedViewController as? FullscreenContentViewController else {
+                print("unable to access current VC")
+                fatalError("Unable ot access the current view controller")
+            }
+            
+            // using postUUID as stable identifier, returning the corresponding contentCell for this fullscreen content
+            let targetUUID = controller.currentContent.postUUID
+            return self.findCellForContent(with: targetUUID)
+        }
+        present(fullscreenVC, animated: true)
+    }
+    
+    // Helper method to find a cell by content UUID (stable identifier)
+    private func findCellForContent(with uuid: String) -> UIView? {
+        // Find the index of the content with matching UUID
+        guard let index = content.firstIndex(where: { $0.postUUID == uuid }) else {
+            return nil
         }
         
-        let cellFrameInWindow = cell.convert(cell.bounds, to: nil)
-        let fullscreenVC = FullscreenContentViewController(content: content, initialFrame: cellFrameInWindow)
-        fullscreenVC.modalPresentationStyle = .overFullScreen // FIXME: duplicate code
-        fullscreenVC.modalTransitionStyle = .coverVertical
-        present(fullscreenVC, animated: false) // We handle the animation ourselves
+        let indexPath = IndexPath(item: index, section: 0)
+        return collectionView.cellForItem(at: indexPath)
     }
     
     // display share/info/delete on longpress 
@@ -179,7 +190,21 @@ extension ArchiveViewController: UICollectionViewDataSource {
         }
         
         let content = content[indexPath.item]
-        cell.configure(with: content)
+        cell.configure(with: content) // configure the cell for image/video
+        
+        // retrieve image for this cell
+        let UUID: String = content.postType == .image ? content.postUUID : "7e1261b4-15c9-4dcb-b798-269b8c89906a" // use temp thumbnail for videos
+        if let mediaURL = cloudfrontURLFormatter(
+            userID: content.userID,
+            contentUUID: UUID,
+            contentType: .image,
+            assetCategory: .post
+        ) {
+            cell.setImage(with: mediaURL)
+        } else {
+            print("ContentCell: Failed to create media URL for content: \(content.postUUID)")
+        }
+        
         return cell
     }
 }

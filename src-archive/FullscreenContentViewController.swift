@@ -8,6 +8,7 @@
 import UIKit
 import AVFoundation
 import AVKit
+import Kingfisher
 
 class FullscreenContentViewController: UIViewController {
     
@@ -30,14 +31,6 @@ class FullscreenContentViewController: UIViewController {
     private let likesLabel = UILabel()
     private let commentsLabel = UILabel()
     private let viewsLabel = UILabel()
-    
-    // Transition properties
-    private var initialFrame: CGRect = .zero
-    private var isTransitioning = false
-    
-    // Constraint references for animation
-    private var imageViewConstraints: [NSLayoutConstraint] = []
-    private var videoViewConstraints: [NSLayoutConstraint] = []
     
     // MARK: constants
     private struct Constants {
@@ -65,13 +58,6 @@ class FullscreenContentViewController: UIViewController {
         static var finalHeightOffset: CGFloat = 10
         static var profileToDateSpacing: CGFloat = 12
         
-        // animation
-        static var animationDuration: TimeInterval = 0.3
-        static var animationOutDuration: TimeInterval = 0.25
-        static var springDamping: CGFloat = 0.8
-        static var springOutDamping: CGFloat = 0.9
-        static var springVelocity: CGFloat = 0.5
-        
         // font sizes
         static var dateFontSize: CGFloat = 14
         static var timeFontSize: CGFloat = 14   
@@ -82,10 +68,13 @@ class FullscreenContentViewController: UIViewController {
        }
     }
     
+    var currentContent: ContentMetadata {
+        return content
+    }
+    
     // MARK: - Initialization
-    init(content: ContentMetadata, initialFrame: CGRect = .zero) {
+    init(content: ContentMetadata) {
         self.content = content
-        self.initialFrame = initialFrame
         super.init(nibName: nil, bundle: nil)
         setupView()
     }
@@ -105,15 +94,9 @@ class FullscreenContentViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+
         if content.postType == .video {
             videoPlayer.play()
-        }
-    }
-    
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        if !initialFrame.isEmpty {
-            animateIn()
         }
     }
     
@@ -126,8 +109,9 @@ class FullscreenContentViewController: UIViewController {
     
     // MARK: - Setup Methods
     private func setupView() {
-        view.backgroundColor = .clear
-        modalPresentationStyle = .overFullScreen // want parent view to show through
+        view.backgroundColor = .systemBackground
+        modalPresentationStyle = .fullScreen
+        // want parent view to show through
         modalTransitionStyle = .coverVertical
     }
     
@@ -146,18 +130,21 @@ class FullscreenContentViewController: UIViewController {
         view.addSubview(imageView)
         
         // Video Player View
-        videoPlayerViewController.view.backgroundColor = .systemGray5
         videoPlayerViewController.view.translatesAutoresizingMaskIntoConstraints = false
         videoPlayerViewController.view.layer.cornerRadius = Constants.contentCornerRadius
         videoPlayerViewController.view.layer.masksToBounds = true
-        videoPlayerViewController.showsPlaybackControls = true // TODO: fix controls
         // Add subtle shadow for bevel effect FIXME: update
         videoPlayerViewController.view.layer.shadowColor = UIColor.black.cgColor
         videoPlayerViewController.view.layer.shadowOffset = Constants.shadowOffset
         videoPlayerViewController.view.layer.shadowOpacity = Constants.shadowOpacity
         videoPlayerViewController.view.layer.shadowRadius = Constants.shadowRadius
-        videoPlayerViewController.player = videoPlayer
+        
+        videoPlayerViewController.showsPlaybackControls = true // TODO: fix controls
+        videoPlayerViewController.allowsPictureInPicturePlayback = false
         videoPlayerViewController.videoGravity = .resizeAspect
+        
+        videoPlayerViewController.player = videoPlayer
+
         view.addSubview(videoPlayerViewController.view)
         
         // Profile Image View
@@ -263,33 +250,18 @@ class FullscreenContentViewController: UIViewController {
     }
     
     private func setupConstraints() {
-        // Store constraint references
-        imageViewConstraints = [
+        NSLayoutConstraint.activate([
+            // Image View
             imageView.topAnchor.constraint(equalTo: view.topAnchor),
             imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            imageView.bottomAnchor.constraint(equalTo: interactionStackView.topAnchor, constant: -Constants.contentSpacing)
-        ]
-        
-        videoViewConstraints = [
+            imageView.bottomAnchor.constraint(equalTo: interactionStackView.topAnchor, constant: -Constants.contentSpacing),
+            
+            // Video View
             videoPlayerViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
             videoPlayerViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             videoPlayerViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            videoPlayerViewController.view.bottomAnchor.constraint(equalTo: interactionStackView.topAnchor, constant: -Constants.contentSpacing)
-        ]
-        
-        NSLayoutConstraint.activate([
-            // Image View
-            imageViewConstraints[0],
-            imageViewConstraints[1],
-            imageViewConstraints[2],
-            imageViewConstraints[3],
-            
-            // Video Player View
-            videoViewConstraints[0],
-            videoViewConstraints[1],
-            videoViewConstraints[2],
-            videoViewConstraints[3],
+            videoPlayerViewController.view.bottomAnchor.constraint(equalTo: interactionStackView.topAnchor, constant: -Constants.contentSpacing),
             
             // Profile Image View
             profileImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: Constants.safeAreaSpacing),
@@ -344,7 +316,14 @@ class FullscreenContentViewController: UIViewController {
             case .image:
                 imageView.isHidden = false
                 videoPlayerViewController.view.isHidden = true
-                imageView.loadImage(from: mediaURL, placeholder: UIImage(systemName: "photo"))
+                imageView.kf.setImage(with: URL(string: mediaURL)) { result in
+                    switch result {
+                    case .success(let imageResult):
+                        print("Image loaded from cache: \(imageResult.cacheType)")
+                    case .failure(let error):
+                        print("Error: \(error)")
+                    }
+                }
                 
             case .video:
                 imageView.isHidden = true
@@ -354,132 +333,14 @@ class FullscreenContentViewController: UIViewController {
                     videoPlayer.replaceCurrentItem(with: playerItem)
                 }
             }
-        }
-    }
-    
-    // MARK: - Animation Methods
-    private func animateIn() {
-        guard !initialFrame.isEmpty else { return }
-        
-        // Set initial state
-        guard let targetView: UIView = content.postType == .image ? imageView : videoPlayerViewController.view else { return }
-        let targetConstraints = content.postType == .image ? imageViewConstraints : videoViewConstraints
-        
-        // Deactivate constraints for the target view
-        NSLayoutConstraint.deactivate(targetConstraints)
-        
-        // Temporarily disable Auto Layout constraints for the target view
-        targetView.translatesAutoresizingMaskIntoConstraints = true
-        
-        // Set initial frame and corner radius
-        targetView.frame = initialFrame
-        targetView.layer.cornerRadius = Constants.initialCornerRadius
-        
-        // Hide interaction elements initially
-        closeButton.alpha = 0
-        profileImageView.alpha = 0
-        dateTimeStackView.alpha = 0
-        interactionStackView.alpha = 0
-        
-        let finalFrame = CGRect(
-            x: 0,
-            y: 0,
-            width: view.bounds.width,
-            height: view.bounds.height - Constants.interactionAreaHeight - view.safeAreaInsets.bottom - Constants.finalHeightOffset // FIXME: find better way to get final height
-        )
-        
-        // Animate to final state
-        UIView.animate(withDuration: Constants.animationDuration, delay: 0, usingSpringWithDamping: Constants.springDamping, initialSpringVelocity: Constants.springVelocity, options: .curveEaseInOut) {
-            targetView.frame = finalFrame
-            targetView.layer.cornerRadius = Constants.contentCornerRadius
-            
-            // Fade in interaction elements
-            self.closeButton.alpha = 1
-            self.profileImageView.alpha = 1
-            self.dateTimeStackView.alpha = 1
-            self.interactionStackView.alpha = 1
-            
-            // Set background color during animation
-            self.view.backgroundColor = .systemBackground
-        } completion: { _ in
-            self.isTransitioning = false
-        }
-    }
-    
-    private func animateOut(completion: @escaping () -> Void) {
-        guard !initialFrame.isEmpty else {
-            completion()
-            return
-        }
-        
-        isTransitioning = true
-        guard let targetView: UIView = content.postType == .image ? imageView : videoPlayerViewController.view else { return }
-        
-        // Create a temporary imageView with scaleAspectFill to match the cell
-        let tempImageView = UIImageView()
-        tempImageView.contentMode = .scaleAspectFill
-        tempImageView.clipsToBounds = true
-        tempImageView.layer.cornerRadius = Constants.contentCornerRadius
-        tempImageView.frame = targetView.frame
-        tempImageView.image = targetView is UIImageView ? (targetView as! UIImageView).image : nil
-        
-        // capture current frame for video TODO: switch to using provided thumbnail
-        if content.postType == .video {
-            if let playerLayer = videoPlayerViewController.view.layer.sublayers?.first as? AVPlayerLayer,
-               let player = playerLayer.player,
-               let currentItem = player.currentItem {
-                let imageGenerator = AVAssetImageGenerator(asset: currentItem.asset)
-                imageGenerator.appliesPreferredTrackTransform = true
-                let time = player.currentTime()
-                
-                Task {
-                    do {
-                        let result = try await imageGenerator.image(at: time)
-                        await MainActor.run {
-                            tempImageView.image = UIImage(cgImage: result.image)
-                        }
-                    } catch {
-                        // placeholder if frame capture fails
-                        await MainActor.run {
-                            tempImageView.image = UIImage(systemName: "play.rectangle")
-                            tempImageView.backgroundColor = .systemGray5
-                        }
-                    }
-                }
-            } else {
-                // Fallback if player/item not available
-                tempImageView.image = UIImage(systemName: "play.rectangle")
-                tempImageView.backgroundColor = .systemGray5
-            }
-        }
-        
-        view.addSubview(tempImageView)
-        
-        // Hide the original view
-        targetView.alpha = 0
-        
-        UIView.animate(withDuration: Constants.animationOutDuration, delay: 0, usingSpringWithDamping: Constants.springOutDamping, initialSpringVelocity: Constants.springVelocity, options: .curveEaseInOut) {
-            tempImageView.frame = self.initialFrame
-            tempImageView.layer.cornerRadius = Constants.initialCornerRadius
-            
-            // Fade out interaction elements
-            self.closeButton.alpha = 0
-            self.profileImageView.alpha = 0
-            self.dateTimeStackView.alpha = 0
-            self.interactionStackView.alpha = 0
-            
-            self.view.backgroundColor = .clear
-        } completion: { _ in
-            tempImageView.removeFromSuperview()
-            completion()
+        } else {
+            print("failed to load content")
         }
     }
     
     // MARK: - Actions
     @objc private func closeButtonTapped() {
-        animateOut {
-            self.dismiss(animated: false)
-        }
+        dismiss(animated: true)
     }
     
     // Use default swipe down animation

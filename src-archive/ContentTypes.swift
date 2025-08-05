@@ -67,20 +67,3 @@ enum MediaAssetCategory {
     }
 }
 
-func cloudfrontURLFormatter(userID: String, contentUUID: String, contentType: ContentType? = nil, assetCategory: MediaAssetCategory) -> String? {
-    if assetCategory == .post {
-        if contentType == .image {
-            return "https://d2efywtjr3ai55.cloudfront.net/sample_data/\(userID)/post/\(contentUUID)/og"
-        } else if contentType == .video {
-            return "https://d2efywtjr3ai55.cloudfront.net/sample_data/\(userID)/post/\(contentUUID)/hls/og.m3u8"
-        } else {
-            print("URLFormatter: Unknown content type: \(String(describing: contentType))")
-        }
-    } else if assetCategory == .profile_pic {
-        return "https://d2efywtjr3ai55.cloudfront.net/sample_data/\(userID)/profile_pic/\(contentUUID)/og"
-    }
-    
-    print("URLFormatter: Unable to format cloudfront URL for asset category: \(assetCategory)")
-    return nil
-}
-
