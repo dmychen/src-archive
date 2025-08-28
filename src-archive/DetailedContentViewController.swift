@@ -33,6 +33,8 @@ class DetailedContentViewController: UIViewController {
     private let commentsLabel = UILabel()
     private let viewsLabel = UILabel()
     
+    private let placeholderImage = UIImage(systemName: "Ar")
+    
     // MARK: constants
     private struct Constants {
         // corners
@@ -341,7 +343,7 @@ class DetailedContentViewController: UIViewController {
             case .image:
                 imageView.isHidden = false
                 videoPlayerViewController.view.isHidden = true
-                imageView.kf.setImage(with: URL(string: mediaURL)) { result in
+                imageView.kf.setImage(with: URL(string: mediaURL), placeholder: placeholderImage) { result in
                     switch result {
                     case .success(let imageResult):
                         print("Image loaded from cache: \(imageResult.cacheType)")

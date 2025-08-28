@@ -13,7 +13,7 @@ class ContentService {
     
     private init() {}
     
-    func fetchUserContent(completion: @escaping (Result<[ContentMetadata], Error>) -> Void) {
+    func fetchUserContent(page: Int, pageSize: Int, completion: @escaping (Result<[ContentMetadata], Error>) -> Void) {
         // load mock data
         DispatchQueue.global(qos: .userInitiated).async {
             do {

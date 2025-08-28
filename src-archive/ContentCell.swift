@@ -14,6 +14,9 @@ class ContentCell: UICollectionViewCell {
     // identifier to associate with ContentCell when it is registered to CollectionView
     static let identifier = "ContentCell"
     
+    // placeholder image to use
+    static let placeholderImage = UIImage(systemName: "photo.fill")
+    
     // MARK: constants
     private struct Constants {
         // corner radius
@@ -232,6 +235,7 @@ class ContentCell: UICollectionViewCell {
         
         imageView.kf.setImage(
             with: URL(string: url),
+            placeholder: ContentCell.placeholderImage,
             options: [.processor(downsamplingProcessor)]
         ) { result in
             switch result {
